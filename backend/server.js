@@ -258,8 +258,17 @@ app.delete('/api/tasks/:id',       protect, adminOnly, deleteTask);
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
 
-// 404 & error handlers
-app.use((_, res)       => res.status(404).json({ message: 'Route not found' }));
+// ── Serve React frontend ───────────────────────────────────────
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
+
+// React catch-all: any non-API route returns index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API 404 & error handlers (only reached by /api routes that didn't match)
+app.use((_, res)        => res.status(404).json({ message: 'Route not found' }));
 app.use((e, _, res, _2) => res.status(e.status || 500).json({ message: e.message || 'Internal Server Error' }));
 
 // ── Start ──────────────────────────────────────────────────────

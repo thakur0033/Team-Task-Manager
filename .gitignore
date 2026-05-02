@@ -18,5 +18,6 @@ Thumbs.db
 .idea/
 
 # ── Build output ──────────────────────────────
-dist/
-build/
+frontend/dist/
+frontend/build/
+# backend/public is intentionally committed (pre-built frontend for Railway)

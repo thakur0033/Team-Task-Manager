@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Uses VITE_API_URL in production (set in Railway dashboard)
-  // Falls back to localhost for local development
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
