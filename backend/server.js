@@ -271,10 +271,26 @@ app.get('*', (req, res) => {
 app.use((_, res)        => res.status(404).json({ message: 'Route not found' }));
 app.use((e, _, res, _2) => res.status(e.status || 500).json({ message: e.message || 'Internal Server Error' }));
 
+// ── Auto-seed default admins ───────────────────────────────────
+const seedAdmins = async () => {
+  const defaults = [
+    { name: 'Admin',   email: 'admin@test.com',  password: '123456',     role: 'Admin' },
+    { name: 'Admin 2', email: 'admin2@test.com', password: 'admin@1234', role: 'Admin' },
+  ];
+  for (const data of defaults) {
+    const exists = await User.findOne({ email: data.email });
+    if (!exists) {
+      await User.create(data); // password auto-hashed by pre-save hook
+      console.log(`[seed] Admin created: ${data.email}`);
+    }
+  }
+};
+
 // ── Start ──────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB Connected');
+    await seedAdmins();
     app.listen(process.env.PORT || 5000, () =>
       console.log(`Server running on port ${process.env.PORT || 5000}`));
   })
