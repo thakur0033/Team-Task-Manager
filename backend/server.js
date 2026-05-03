@@ -271,10 +271,23 @@ app.get('*', (req, res) => {
 app.use((_, res)        => res.status(404).json({ message: 'Route not found' }));
 app.use((e, _, res, _2) => res.status(e.status || 500).json({ message: e.message || 'Internal Server Error' }));
 
+// ── Seed ───────────────────────────────────────────────────────
+const seedAdminUser = async () => {
+  const email = 'admin@example.com';
+  const existing = await User.findOne({ email });
+  if (existing) {
+    console.log('Admin user already exists — skipping seed');
+    return;
+  }
+  await User.create({ name: 'Admin User', email, password: 'Admin@123', role: 'Admin' });
+  console.log('Default admin user created (admin@example.com / Admin@123)');
+};
+
 // ── Start ──────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB Connected');
+    await seedAdminUser();
     app.listen(process.env.PORT || 5000, () =>
       console.log(`Server running on port ${process.env.PORT || 5000}`));
   })
