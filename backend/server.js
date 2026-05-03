@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 
 // ── Env validation ─────────────────────────────────────────────
 ['MONGO_URI', 'JWT_SECRET'].forEach((k) => {
@@ -259,12 +260,13 @@ app.delete('/api/tasks/:id',       protect, adminOnly, deleteTask);
 app.get('/health', (_, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
 
 // ── Serve React frontend ───────────────────────────────────────
-const path = require('path');
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// React catch-all: any non-API route returns index.html
+// SPA fallback: serve index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  }
 });
 
 // API 404 & error handlers (only reached by /api routes that didn't match)
