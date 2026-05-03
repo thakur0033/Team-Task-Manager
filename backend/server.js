@@ -25,7 +25,8 @@ const paginate  = (q)  => {
   const limit = Math.max(1, parseInt(q.limit, 10) || 10);
   return { page, limit, skip: (page - 1) * limit };
 };
-const genToken  = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const genToken      = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const isValidObjId  = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // ── Middleware ─────────────────────────────────────────────────
 const protect = async (req, res, next) => {
@@ -90,9 +91,12 @@ const createProject = async (req, res) => {
     if (!notEmpty(name) || !notEmpty(description))
       return res.status(400).json({ message: 'Name and description are required' });
     if (members.length) {
+      const invalidIds = members.filter((id) => !isValidObjId(id));
+      if (invalidIds.length)
+        return res.status(400).json({ message: `Invalid member ID format: ${invalidIds.join(', ')}` });
       const valid = await User.find({ _id: { $in: members } });
       if (valid.length !== members.length)
-        return res.status(400).json({ message: 'One or more member IDs are invalid' });
+        return res.status(400).json({ message: 'One or more member IDs were not found' });
     }
     const project = await Project.create({ name, description, createdBy: req.user._id, members });
     res.status(201).json(await project.populate([
@@ -116,6 +120,8 @@ const getProjects = async (req, res) => {
 
 const updateProject = async (req, res) => {
   try {
+    if (!isValidObjId(req.params.id))
+      return res.status(400).json({ message: 'Invalid project ID format' });
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
     let { name, description, members } = req.body;
@@ -123,7 +129,14 @@ const updateProject = async (req, res) => {
     if (description !== undefined) { description = trim(description); if (!notEmpty(description)) return res.status(400).json({ message: 'Description cannot be empty' }); project.description = description; }
     if (members !== undefined) {
       const list = Array.isArray(members) ? members : [];
-      if (list.length) { const v = await User.find({ _id: { $in: list } }); if (v.length !== list.length) return res.status(400).json({ message: 'One or more member IDs are invalid' }); }
+      if (list.length) {
+        const invalidIds = list.filter((id) => !isValidObjId(id));
+        if (invalidIds.length)
+          return res.status(400).json({ message: `Invalid member ID format: ${invalidIds.join(', ')}` });
+        const v = await User.find({ _id: { $in: list } });
+        if (v.length !== list.length)
+          return res.status(400).json({ message: 'One or more member IDs were not found' });
+      }
       project.members = list;
     }
     const updated = await project.save();
