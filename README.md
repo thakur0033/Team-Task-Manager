@@ -41,8 +41,23 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-### Admin Account
-Create the first admin by hitting the signup endpoint with `role: "Admin"`, or use the backend directly via MongoDB.
+### Admin Account (Seed Script)
+
+Run the seed script to create default admin accounts:
+
+```bash
+cd backend
+node seed.js
+```
+
+Default admin credentials after seeding:
+
+| Email            | Password    | Role  |
+|------------------|-------------|-------|
+| admin@test.com   | 123456      | Admin |
+| admin2@test.com  | admin@1234  | Admin |
+
+> The seed script is idempotent — running it multiple times won't create duplicates.
 
 ## Project Structure
 
